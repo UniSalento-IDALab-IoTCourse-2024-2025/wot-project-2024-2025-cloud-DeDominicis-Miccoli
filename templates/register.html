@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione - IIT Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .register-container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            color: #f8fafc;
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            color: #f8fafc;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f8fafc;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .role-info {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-start;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #93c5fd;
+        }
+
+        .role-info svg {
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 1rem;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-register:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-register:disabled {
+            background: #334155;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+            padding: 0.875rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #6ee7b7;
+            padding: 0.875rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #334155;
+        }
+
+        .login-link a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="8.5" cy="7" r="4"/>
+                    <line x1="20" y1="8" x2="20" y2="14"/>
+                    <line x1="23" y1="11" x2="17" y2="11"/>
+                </svg>
+            </div>
+            <h1>Registrazione</h1>
+            <p class="subtitle">Crea un nuovo account</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <form id="registerForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nome">Nome</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="cognome">Cognome</label>
+                    <input type="text" id="cognome" name="cognome" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="new-password" minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="ruolo">Ruolo</label>
+                <select id="ruolo" name="ruolo" required>
+                    <option value="">-- Seleziona ruolo --</option>
+                    <option value="paziente">Paziente</option>
+                    <option value="medico">Medico</option>
+                    <option value="admin">Amministratore</option>
+                </select>
+                <div class="role-info" id="roleInfo" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    <span id="roleInfoText"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-register" id="registerBtn">Registrati</button>
+        </form>
+
+        <div class="login-link">
+            Hai già un account? <a href="/login">Accedi qui</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        const errorMsg = document.getElementById('errorMessage');
+        const successMsg = document.getElementById('successMessage');
+        const registerBtn = document.getElementById('registerBtn');
+        const ruoloSelect = document.getElementById('ruolo');
+        const roleInfo = document.getElementById('roleInfo');
+        const roleInfoText = document.getElementById('roleInfoText');
+
+        const roleDescriptions = {
+            paziente: 'Accesso base: visualizzazione dati in tempo reale, storico e anomalie.',
+            medico: 'Accesso medico: include gestione modelli ML oltre alle funzioni base.',
+            admin: 'Accesso completo: tutte le funzionalità inclusa gestione utenti e debug.'
+        };
+
+        ruoloSelect.addEventListener('change', (e) => {
+            const role = e.target.value;
+            if (role && roleDescriptions[role]) {
+                roleInfoText.textContent = roleDescriptions[role];
+                roleInfo.style.display = 'flex';
+            } else {
+                roleInfo.style.display = 'none';
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                nome: document.getElementById('nome').value,
+                cognome: document.getElementById('cognome').value,
+                ruolo: document.getElementById('ruolo').value
+            };
+
+            // Validation
+            if (formData.password.length < 6) {
+                errorMsg.textContent = 'La password deve essere di almeno 6 caratteri';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (!formData.ruolo) {
+                errorMsg.textContent = 'Seleziona un ruolo';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            // Disable button
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Registrazione in corso...';
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    successMsg.textContent = 'Registrazione completata! Reindirizzamento...';
+                    successMsg.style.display = 'block';
+                    form.reset();
+                    
+                    // Redirect to login after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    errorMsg.textContent = data.error || 'Errore durante la registrazione';
+                    errorMsg.style.display = 'block';
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = 'Registrati';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Errore di connessione al server';
+                errorMsg.style.display = 'block';
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Registrati';
+            }
+        });
+    </script>
+</body>
+</html>

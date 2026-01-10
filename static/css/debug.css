@@ -1,0 +1,312 @@
+/* ========== DEBUG MODE STYLES ========== */
+.debug-view {
+    display: none;
+    padding: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.debug-view.active {
+    display: block;
+}
+
+.debug-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.debug-panel h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.log-count {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+/* Filters */
+.debug-filters {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.debug-select {
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    min-width: 180px;
+}
+
+.debug-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.btn-debug-refresh,
+.btn-debug-export,
+.btn-debug-clear {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.btn-debug-refresh:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.btn-debug-export:hover {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.btn-debug-clear:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+
+/* Console */
+.debug-console {
+    background: #0d1117;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 1rem;
+    height: 500px;
+    overflow-y: auto;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.console-line {
+    padding: 0.25rem 0;
+    line-height: 1.6;
+    border-left: 3px solid transparent;
+    padding-left: 0.5rem;
+}
+
+.console-line.info {
+    color: #58a6ff;
+    border-left-color: #58a6ff;
+}
+
+.console-line.warning {
+    color: #f59e0b;
+    border-left-color: #f59e0b;
+}
+
+.console-line.error {
+    color: #ff7b72;
+    border-left-color: #ff7b72;
+}
+
+.console-line.debug {
+    color: #8b949e;
+    border-left-color: #8b949e;
+}
+
+.console-timestamp {
+    color: #6e7681;
+    font-size: 0.75rem;
+}
+
+.console-category {
+    font-weight: 600;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    margin: 0 0.5rem;
+}
+
+.console-category.mqtt {
+    background: rgba(139, 92, 246, 0.2);
+    color: #8b5cf6;
+}
+
+.console-category.dashboard {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.console-category.ecg-anomaly,
+.console-category.piezo-anomaly,
+.console-category.temp-anomaly {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.console-category.serial {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.console-category.config {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+@media (max-width: 768px) {
+    .debug-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-actions {
+        margin-left: 0;
+        flex-direction: column;
+    }
+    
+    .btn-debug-refresh,
+    .btn-debug-export,
+    .btn-debug-clear {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Debug Modal Styles */
+.debug-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.debug-modal-overlay.active {
+    opacity: 1;
+}
+
+.debug-modal {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    min-width: 400px;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.debug-modal-overlay.active .debug-modal {
+    transform: scale(1);
+}
+
+.debug-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.debug-modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.debug-modal-body {
+    padding: 1.5rem;
+}
+
+.debug-modal-body p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.debug-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--card-border);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.debug-modal-btn {
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.debug-modal-btn-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.debug-modal-btn-cancel:hover {
+    background: var(--card-border);
+    color: var(--text-primary);
+}
+
+.debug-modal-btn-confirm {
+    background: var(--primary);
+    color: white;
+}
+
+.debug-modal-btn-confirm:hover {
+    background: #0056d6;
+}
+
+@media (max-width: 768px) {
+    .debug-modal {
+        min-width: auto;
+        width: 90%;
+        max-width: 90%;
+    }
+}

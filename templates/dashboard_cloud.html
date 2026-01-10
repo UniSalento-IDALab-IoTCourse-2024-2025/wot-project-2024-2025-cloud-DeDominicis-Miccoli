@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Cloud - Monitoraggio Parametri T-Shirt</title>
+    
+    <!-- Librerie esterne -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- CSS della dashboard -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anomalies.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_management.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/debug.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/models.css') }}">
+    
+    <style>
+        /* Main content con sidebar */
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        /* Views management */
+        .realtime-view,
+        .history-view,
+        .anomalies-view,
+        .debug-view,
+        .models-view,
+        .user-management-view {
+            display: none;
+        }
+        
+        .realtime-view.active,
+        .history-view.active,
+        .anomalies-view.active,
+        .debug-view.active,
+        .models-view.active,
+        .user-management-view.active {
+            display: block;
+        }
+        
+        /* Nascondi elementi vecchi */
+        .navbar,
+        .home-menu,
+        .back-button {
+            display: none !important;
+        }
+        
+        /* Dashboard container senza padding extra */
+        .dashboard-container {
+            padding: 0;
+        }
+
+        /* Modern Toggle Switch - Green Style */
+        .modern-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+
+        .modern-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .modern-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4a5568;
+            transition: 0.3s;
+            border-radius: 34px;
+        }
+
+        .modern-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .modern-toggle-switch input:checked + .modern-toggle-slider {
+            background-color: #10b981;
+        }
+
+        .modern-toggle-switch input:checked + .modern-toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        .modern-toggle-switch input:focus + .modern-toggle-slider {
+            box-shadow: 0 0 1px #10b981;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR SINISTRA -->
+    <div class="sidebar">
+        <!-- Logo e titolo -->
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+            </div>
+            <div class="sidebar-title">
+                <h1>IIT Dashboard</h1>
+                <span class="sidebar-subtitle">Cloud</span>
+            </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="sidebar-section" style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
+            <h4 style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.75rem;">System Status</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div id="deviceStatus" class="status-indicator status-disconnected" style="width: 100%; justify-content: flex-start; font-size: 0.85rem;">
+                    <span class="status-dot"></span>
+                    <span>Device</span>
+                </div>
+                <div id="acquisitionStatus" class="status-indicator status-idle" style="width: 100%; justify-content: flex-start; font-size: 0.85rem;">
+                    <span class="status-dot"></span>
+                    <span>Acquisition</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Navigation -->
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" onclick="showRealtimeView(); return false;" id="navRealtime">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                </svg>
+                <span>Real-time</span>
+            </a>
+
+            <a href="#" class="nav-item" onclick="showHistoryView(); return false;" id="navHistory">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+                <span>Dati Storici</span>
+            </a>
+
+            <a href="#" class="nav-item" onclick="showAnomaliesView(); return false;" id="navAnomalies">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Anomalie</span>
+            </a>
+
+            <!-- Expert Mode Toggle (SOLO ADMIN e MEDICO) -->
+            <div class="sidebar-section" id="expertModeSection" style="display: none; padding: 0.75rem 1rem; margin-top: 0.5rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;">Modalità Esperta</span>
+                    <label class="modern-toggle-switch">
+                        <input type="checkbox" id="expertModeToggle" onchange="toggleExpertMode()">
+                        <span class="modern-toggle-slider"></span>
+                    </label>
+                </div>
+                
+            <!-- Admin Menu (visibile solo con expert mode ON) -->
+            <div id="expertMenu" style="display: none; margin-top: 0.5rem;">
+                <a href="#" class="nav-item" onclick="showDebugView(); return false;" id="navDebug" style="font-size: 0.85rem; padding: 0.5rem 0.75rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>Debug</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showModelsView(); return false;" id="navModels" style="font-size: 0.85rem; padding: 0.5rem 0.75rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2m6-5.2h-6m-6 0H1m13.2-5.2l-4.2 4.2m0-6l4.2-4.2"/>
+                    </svg>
+                    <span>Crea Modello</span>
+                </a>
+                <a href="#" class="nav-item" onclick="showUserManagement(); return false;" id="navUserManagement" style="font-size: 0.85rem; padding: 0.5rem 0.75rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Gestione Utenti</span>
+                </a>
+            </div>
+        </div>
+        </nav>
+
+        <!-- User Info + Logout -->
+        <div class="sidebar-section" style="padding: 1rem; border-top: 1px solid var(--border-color); margin-top: auto;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="flex: 1; min-width: 0;">
+                    <div id="userDisplayName" style="font-size: 0.85rem; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+                    <div id="userRole" style="font-size: 0.75rem; color: var(--text-secondary); text-transform: capitalize;">-</div>
+                </div>
+                <button onclick="handleLogout()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.5rem;" title="Logout">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION CONTAINER -->
+    <div id="notificationsContainer" class="notifications-container"></div>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="main-content">
+
+    <!-- VISTA TEMPO REALE -->
+    <div id="realtimeView" class="realtime-view active">
+        <div class="dashboard-container">
+
+            <!-- Statistiche -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Current Temperature</div>
+                    <div class="stat-value">
+                        <span id="tempValue">--</span>
+                        <span class="stat-unit">°C</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafici -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                        ECG Signal
+                    </div>
+                    <div class="chart-info">
+                        <span class="chart-badge">250 Hz</span>
+                        <span id="ecgDataPoints">0 points</span>
+                    </div>
+                </div>
+                <div id="ecgChart" style="height: 350px;"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                        ADC Channels
+                    </div>
+                    <div class="chart-info">
+                        <span class="chart-badge">250 Hz</span>
+                        <span id="adcDataPoints">0 points</span>
+                    </div>
+                </div>
+                <div id="adcChart" style="height: 350px;"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                        </svg>
+                        Temperature Trend
+                    </div>
+                    <div class="chart-info">
+                        <span class="chart-badge">Every 2 min</span>
+                        <span id="tempDataPoints">0 points</span>
+                    </div>
+                </div>
+                <div id="tempChart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA STORICO -->
+    <div id="historyView" class="history-view">
+        <div class="dashboard-container">
+            <button class="back-button" onclick="showHomeMenu()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Torna al Menu
+            </button>
+
+            <!-- Pannello filtri -->
+            <div class="filter-panel">
+                <h4>Seleziona Sessione Storica</h4>
+                <div class="filter-grid">
+                    <div class="form-group">
+                        <label class="form-label">Data</label>
+                        <select id="dateSelect" class="form-select">
+                            <option value="">Caricamento...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Segnale</label>
+                        <select id="signalSelect" class="form-select">
+                            <option value="ECG">ECG</option>
+                            <option value="ADC">ADC</option>
+                            <option value="TEMP">Temperatura</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">&nbsp;</label>
+                        <button id="btnLoadHistory" class="btn-load" onclick="loadHistoricalData()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Carica Dati
+                        </button>
+                    </div>
+                </div>
+
+                <div id="historySessions" class="session-list" style="display: none;"></div>
+            </div>
+
+            <div id="historyStatsGrid" class="stats-grid" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-label">Session ID</div>
+                    <div class="stat-value" style="font-size: 1rem;">
+                        <span id="histSessionId">--</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Data Points</div>
+                    <div class="stat-value">
+                        <span id="histDataPoints">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Start Time</div>
+                    <div class="stat-value" style="font-size: 1rem;">
+                        <span id="histStartTime">--</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">End Time</div>
+                    <div class="stat-value" style="font-size: 1rem;">
+                        <span id="histEndTime">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="historyChartsContainer" style="display: none;">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                            <span id="historyChartTitle">Historical Data</span>
+                        </div>
+                        <div class="chart-info">
+                            <span id="historyChartBadge" class="chart-badge">Historical</span>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-controls">
+                        <div class="control-group">
+                            <label class="control-label">Punti Visualizzati</label>
+                            <div class="control-buttons">
+                                <button class="btn-control-small" onclick="changeWindowSize(500)">500</button>
+                                <button class="btn-control-small active" onclick="changeWindowSize(1000)">1k</button>
+                                <button class="btn-control-small" onclick="changeWindowSize(2500)">2.5k</button>
+                                <button class="btn-control-small" onclick="changeWindowSize(5000)">5k</button>
+                                <button class="btn-control-small" onclick="changeWindowSize(10000)">10k</button>
+                                <button class="btn-control-small" onclick="changeWindowSize(-1)">Tutto</button>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Navigazione</label>
+                            <div class="control-buttons">
+                                <button class="btn-nav" onclick="navigateData('start')" title="Vai all'inizio">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                                    </svg>
+                                </button>
+                                <button class="btn-nav" onclick="navigateData('prev')" title="Indietro">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M15 18l-6-6 6-6"/>
+                                    </svg>
+                                </button>
+                                <span class="nav-indicator" id="navIndicator">0 - 0</span>
+                                <button class="btn-nav" onclick="navigateData('next')" title="Avanti">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18l6-6-6-6"/>
+                                    </svg>
+                                </button>
+                                <button class="btn-nav" onclick="navigateData('end')" title="Vai alla fine">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group" style="flex: 1;">
+                            <label class="control-label">Posizione (scorri per navigare)</label>
+                            <input type="range" id="dataSlider" class="data-slider" min="0" max="100" value="0" oninput="sliderNavigation(this.value)">
+                        </div>
+                    </div>
+                    
+                    <div id="historyChart" style="height: 450px;"></div>
+                </div>
+            </div>
+
+            <div id="emptyHistoryState" class="empty-state">
+                <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <h3 style="margin-bottom: 0.5rem;">Nessun Dato Selezionato</h3>
+                <p>Seleziona una data e una sessione per visualizzare i dati storici</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA ANOMALIE -->
+    <div id="anomaliesView" class="anomalies-view">
+        <div class="dashboard-container">
+            <button class="back-button" onclick="showHomeMenu()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Torna al Menu
+            </button>
+
+            <!-- Summary Cards -->
+            <div class="anomaly-summary-grid">
+                <div class="summary-card">
+                    <div class="summary-icon ecg">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                    </div>
+                    <div class="summary-value" id="totalEcgAnomalies">0</div>
+                    <div class="summary-label">Anomalie ECG Totali</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon piezo">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <div class="summary-value" id="totalPiezoAnomalies">0</div>
+                    <div class="summary-label">Anomalie PIEZO Totali</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon temp">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+                        </svg>
+                    </div>
+                    <div class="summary-value" id="totalTempAnomalies">0</div>
+                    <div class="summary-label">Anomalie TEMP Totali</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon total">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </div>
+                    <div class="summary-value" id="totalAllAnomalies">0</div>
+                    <div class="summary-label">Anomalie Totali</div>
+                </div>
+            </div>
+
+            <!-- Filter Panel -->
+            <div class="anomaly-filter-panel">
+                <h4>Filtra Anomalie</h4>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>Data</label>
+                        <select id="anomalyDateSelect" class="form-select">
+                            <option value="">Caricamento...</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Tipo Segnale</label>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" onclick="filterAnomalies('all')">Tutti</button>
+                            <button class="filter-btn" onclick="filterAnomalies('ecg')">ECG</button>
+                            <button class="filter-btn" onclick="filterAnomalies('piezo')">PIEZO</button>
+                            <button class="filter-btn" onclick="filterAnomalies('temp')">TEMP</button>
+                        </div>
+                    </div>
+                    <button class="btn-export" onclick="exportAnomalies()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Esporta JSON
+                    </button>
+                </div>
+            </div>
+
+            <!-- Selected Date Stats -->
+            <div id="selectedDateStats" class="selected-date-stats">
+                <div class="date-stat-card ecg">
+                    <div class="stat-value" id="dateEcgCount">0</div>
+                    <div class="stat-label">ECG nella data</div>
+                </div>
+                <div class="date-stat-card piezo">
+                    <div class="stat-value" id="datePiezoCount">0</div>
+                    <div class="stat-label">PIEZO nella data</div>
+                </div>
+                <div class="date-stat-card temp">
+                    <div class="stat-value" id="dateTempCount">0</div>
+                    <div class="stat-label">TEMP nella data</div>
+                </div>
+                <div class="date-stat-card total">
+                    <div class="stat-value" id="dateTotalCount">0</div>
+                    <div class="stat-label">Totale nella data</div>
+                </div>
+            </div>
+
+            <!-- Anomalies List -->
+            <div id="anomaliesListContainer" class="anomalies-list-container">
+                <div id="anomaliesList" class="anomalies-list"></div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyAnomaliesState" class="empty-state">
+                <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <h3 style="margin-bottom: 0.5rem;">Nessuna Anomalia Selezionata</h3>
+                <p>Seleziona una data per visualizzare le anomalie rilevate</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA DEBUG (ADMIN ONLY) -->
+    <div id="debugView" class="debug-view">
+        <div class="view-header">
+            <h2>Debug & System Info</h2>
+            <p class="view-subtitle">Informazioni di sistema e diagnostica avanzata</p>
+        </div>
+
+        <!-- Debug Panel -->
+        <div class="debug-panel">
+            <h4>
+                System Console 
+                <span class="log-count" id="debugLogCount">(0 entries)</span>
+            </h4>
+
+            <!-- Filters -->
+            <div class="debug-filters">
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="debugCategoryFilter" class="debug-select" onchange="applyDebugFilters()">
+                        <option value="">All Categories</option>
+                        <option value="MQTT">MQTT</option>
+                        <option value="Dashboard">Dashboard</option>
+                        <option value="ECG Anomaly">ECG Anomaly</option>
+                        <option value="PIEZO Anomaly">PIEZO Anomaly</option>
+                        <option value="TEMP Anomaly">TEMP Anomaly</option>
+                        <option value="Serial">Serial</option>
+                        <option value="Config">Config</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Level</label>
+                    <select id="debugLevelFilter" class="debug-select" onchange="applyDebugFilters()">
+                        <option value="">All Levels</option>
+                        <option value="INFO">INFO</option>
+                        <option value="WARNING">WARNING</option>
+                        <option value="ERROR">ERROR</option>
+                        <option value="DEBUG">DEBUG</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button class="btn-debug-refresh" onclick="loadDebugLogs()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        Refresh
+                    </button>
+                    <button class="btn-debug-export" onclick="exportDebugLogs()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Export
+                    </button>
+                    <button class="btn-debug-clear" onclick="clearDebugConsole()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Console -->
+            <div class="debug-console" id="debugConsole">
+                <div class="console-line info">[INFO] Debug console initialized. Waiting for logs...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA MODELLI ML (ADMIN ONLY) -->
+    <div id="modelsView" class="models-view">
+        <div class="view-header">
+            <h2>Gestione Modelli ML</h2>
+            <p class="view-subtitle">Creazione e gestione modelli di anomaly detection</p>
+        </div>
+
+        <!-- TABS -->
+        <div class="models-tabs">
+            <button class="models-tab active" data-tab="new" id="tabNew">
+                Nuovo Training
+            </button>
+            <button class="models-tab" data-tab="history" id="tabHistory">
+                Storico Training
+            </button>
+        </div>
+
+        <!-- TAB: NUOVO TRAINING -->
+        <div id="newTrainingTab" class="models-tab-content active">
+            
+            <!-- STEP 1: Tipo Modello -->
+            <div class="training-step">
+                <h3>STEP 1: Tipo Modello</h3>
+                <div class="model-type-selector">
+                    <label class="model-type-option">
+                        <input type="radio" name="modelType" value="ECG" checked>
+                        <div class="model-type-card">
+                            <div class="model-type-icon"></div>
+                            <div class="model-type-title">ECG Model</div>
+                            <div class="model-type-desc">Rilevamento anomalie segnale ECG</div>
+                        </div>
+                    </label>
+                    <label class="model-type-option">
+                        <input type="radio" name="modelType" value="PIEZO">
+                        <div class="model-type-card">
+                            <div class="model-type-icon"></div>
+                            <div class="model-type-title">PIEZO Model</div>
+                            <div class="model-type-desc">Rilevamento anomalie sensore piezoelettrico</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- STEP 2: Configurazione -->
+            <div class="training-step">
+                <h3>STEP 2: Configurazione Modello</h3>
+                <div class="training-form">
+                    <div class="form-group">
+                        <label>Nome Modello</label>
+                        <input type="text" id="modelName" placeholder="es. ECG Anomaly Detector v1.0" class="form-input">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Versione</label>
+                            <input type="text" id="modelVersion" placeholder="1.0" class="form-input">
+                        </div>
+                        <div class="form-group" style="flex: 2;">
+                            <label>Descrizione</label>
+                            <input type="text" id="modelDescription" placeholder="Descrizione breve del modello" class="form-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Selezione Dati -->
+            <div class="training-step">
+                <h3>STEP 3: Selezione Sessioni</h3>
+                <div class="sessions-toolbar">
+                    <button id="btnReloadSessions" class="btn-secondary">
+                        Ricarica Sessioni
+                    </button>
+                    <button id="btnSelectAll" class="btn-secondary">
+                        Seleziona Tutti
+                    </button>
+                    <button id="btnDeselectAll" class="btn-secondary">
+                        Deseleziona Tutti
+                    </button>
+                </div>
+                
+                <div id="sessionsLoadingState" class="loading-state" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Caricamento sessioni...</p>
+                </div>
+
+                <div id="sessionsList" class="sessions-list">
+                    <!-- Sessions will be loaded here -->
+                </div>
+
+                <div class="sessions-summary" id="sessionsSummary">
+                    <span>Selezionate: <strong id="selectedCount">0</strong> sessioni</span>
+                    <span>Durata totale: <strong id="totalDuration">0s</strong></span>
+                    <span>Dati totali: <strong id="totalSize">0 MB</strong></span>
+                </div>
+            </div>
+
+            <!-- STEP 4: Training -->
+            <div class="training-step">
+                <h3>STEP 4: Avvia Training</h3>
+                <div id="trainingControls">
+                    <button id="btnStartTraining" class="btn-primary">
+                        Avvia Training
+                    </button>
+                </div>
+
+                <div id="trainingProgress" style="display: none;">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+                    </div>
+                    <div class="training-info">
+                        <p id="trainingMessage">Initializing...</p>
+                        <p id="trainingStats">Epoch 0/100 | Loss: - | Val Loss: -</p>
+                    </div>
+                </div>
+
+                <div id="trainingComplete" style="display: none;">
+                    <div class="alert alert-success">
+                         Training completato con successo!
+                    </div>
+                    <div class="training-actions">
+                        <button onclick="showTrainingDetails(modelsCurrentTrainingId)" class="btn-primary">
+                             Visualizza Dettagli
+                        </button>
+                        <button onclick="downloadTrainingFile(modelsCurrentTrainingId, 'model')" class="btn-secondary">
+                            Scarica Modello
+                        </button>
+                        <button onclick="downloadTrainingFile(modelsCurrentTrainingId, 'all')" class="btn-secondary">
+                            Scarica Tutto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: STORICO TRAINING -->
+        <div id="historyTrainingTab" class="models-tab-content">
+            <div class="history-toolbar">
+                <input type="text" id="historySearch" placeholder="Cerca training..." class="form-input" onkeyup="filterTrainingHistory()">
+                <select id="historyFilter" class="form-input" onchange="filterTrainingHistory()">
+                    <option value="">Tutti i tipi</option>
+                    <option value="ECG">Solo ECG</option>
+                    <option value="PIEZO">Solo PIEZO</option>
+                </select>
+            </div>
+
+            <div id="historyLoadingState" class="loading-state" style="display: none;">
+                <div class="spinner"></div>
+                <p>Caricamento storico...</p>
+            </div>
+
+            <div id="trainingHistoryList" class="training-history-list">
+                <!-- Training history will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Training Details -->
+    <div id="trainingDetailsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3> Dettagli Training</h3>
+                <button class="modal-close" onclick="closeTrainingDetailsModal()">✕</button>
+            </div>
+            <div class="modal-body" id="trainingDetailsContent">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Chart Viewer -->
+    <div id="chartViewerModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="chartViewerTitle">Chart</h3>
+                <button class="modal-close" onclick="closeChartViewerModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <img id="chartViewerImage" src="" style="width: 100%; height: auto;">
+            </div>
+        </div>
+    </div>
+
+
+    <!-- VISTA GESTIONE UTENTI (ADMIN ONLY) -->
+    <div id="userManagementView" class="user-management-view">
+        <div class="view-header">
+            <h2>Gestione Utenti</h2>
+            <p class="view-subtitle">Gestisci gli utenti del sistema</p>
+        </div>
+
+        <div id="userManagementResult" class="user-result" style="display: none;"></div>
+
+        <div class="users-table-container">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>USERNAME</th>
+                        <th>NOME COMPLETO</th>
+                        <th>RUOLO</th>
+                        <th>ULTIMO ACCESSO</th>
+                        <th style="text-align: right;">AZIONI</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                            Caricamento utenti...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL MODIFICA UTENTE -->
+    <div id="editUserModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Modifica Utente</h3>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="editNome" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Cognome</label>
+                    <input type="text" id="editCognome" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Ruolo</label>
+                    <select id="editRuolo" class="form-control">
+                        <option value="paziente">Paziente</option>
+                        <option value="medico">Medico</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nuova Password (lascia vuoto per non modificare)</label>
+                    <input type="password" id="editPassword" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeEditModal()">Annulla</button>
+                <button class="modal-btn-confirm" id="saveUserEditBtn" onclick="saveUserEdit()">Salva Modifiche</button>
+            </div>
+        </div>
+    </div>
+
+    </div> <!-- End main-content -->
+
+    <!-- MODAL CONFERMA RESET -->
+    <div id="resetModal" class="modal-overlay" onclick="if(event.target === this) closeResetModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </div>
+                <h3 class="modal-title">Conferma Reset</h3>
+            </div>
+            <div class="modal-body">
+                Sei sicuro di voler resettare tutti i grafici e i contatori? Questa azione non può essere annullata.
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-modal-cancel" onclick="closeResetModal()">Annulla</button>
+                <button class="btn-modal btn-modal-confirm" onclick="confirmReset()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal (for alerts and notifications) -->
+    <div id="messageModal" class="modal-overlay" onclick="if(event.target === this) closeMessageModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </div>
+                <h3 class="modal-title">Attenzione</h3>
+            </div>
+            <div class="modal-body">
+                Messaggio
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-modal-confirm" onclick="closeMessageModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal (for confirmations with cancel/ok) -->
+    <div id="confirmModal" class="modal-overlay" onclick="if(event.target === this) closeConfirmModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </div>
+                <h3 class="modal-title">Conferma</h3>
+            </div>
+            <div class="modal-body">
+                Sei sicuro?
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-modal-cancel" onclick="closeConfirmModal(false)">Annulla</button>
+                <button class="btn-modal btn-modal-confirm" onclick="closeConfirmModal(true)">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer-logos">
+        <img src="{{ url_for('static', filename='274709107_319618396869775_4698964766748562013_n-Photoroom.png') }}" alt="Logo 1">
+        <img src="{{ url_for('static', filename='ida_logo_news.png') }}" alt="Logo 2">
+        <img src="{{ url_for('static', filename='IIT-v4-logo-small.png') }}" alt="Logo 3">
+    </footer>
+
+    </div><!-- end main-content -->
+
+    <!-- JavaScript separato - ORDER MATTERS! -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/anomalies.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/debug.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/models.js') }}"></script>
+    
+    <script>
+    // Navigation helper - aggiorna active class sidebar
+    function updateActiveNav(viewId) {
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        const navMap = {
+            'realtimeView': 'navRealtime',
+            'historyView': 'navHistory',
+            'anomaliesView': 'navAnomalies'
+        };
+        const activeNav = document.getElementById(navMap[viewId]);
+        if (activeNav) activeNav.classList.add('active');
+    }
+    
+    // Wait for all scripts to load, then override
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wrap existing functions to update sidebar
+        const originalShowRealtime = window.showRealtimeView;
+        if (originalShowRealtime) {
+            window.showRealtimeView = function() {
+                originalShowRealtime();
+                updateActiveNav('realtimeView');
+            };
+        }
+        
+        const originalShowHistory = window.showHistoryView;
+        if (originalShowHistory) {
+            window.showHistoryView = function() {
+                originalShowHistory();
+                updateActiveNav('historyView');
+            };
+        }
+        
+        const originalShowAnomalies = window.showAnomaliesView;
+        if (originalShowAnomalies) {
+            window.showAnomaliesView = function() {
+                originalShowAnomalies();
+                updateActiveNav('anomaliesView');
+            };
+        }
+    });
+    </script>
+
+    <!-- User Management Script -->
+    <script src="{{ url_for('static', filename='js/user_management.js') }}"></script>
+</body>
+</html>

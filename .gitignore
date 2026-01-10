@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.db
+*.sqlite3
+.DS_Store
+memory.txt
+users.db
+var/
+node_modules/
+.env

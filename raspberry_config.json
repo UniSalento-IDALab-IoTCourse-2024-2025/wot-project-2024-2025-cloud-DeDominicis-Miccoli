@@ -1,0 +1,7 @@
+{
+  "raspberry_ip": "10.18.195.83",
+  "port": 5001,
+  "api_key": "iit-model-upload-2025",
+  "auto_upload": true,
+  "notes": "Configuration for automatic model deployment to Raspberry Pi"
+}
