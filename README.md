@@ -16,7 +16,8 @@ Sistema di acquisizione e analisi in tempo reale dei parametri biometrici basato
 4. [Descrizione dei Componenti](#4-descrizione-dei-componenti)
    - [4.1 Componente Edge](#41-componente-edge)
    - [4.2 Componente Cloud](#42-componente-cloud)
-5. [Autori](#5-autori)
+5. [Avvio del sistema](#5-avvio-del-sistema)
+6. [Autori](#6-autori)
 
 ---
 
@@ -521,7 +522,78 @@ Stili tabella utenti admin-only. Layout table responsivo, action buttons inline,
 
 ---
 
-## 5. Autori
+## 5. Avvio del Sistema
+
+### Configurazione Iniziale
+
+1. **Collegamento Hardware**
+   - Collegare il dongle USB al Raspberry Pi
+
+2. **Configurazione Porte Seriali**
+   
+   Esistono due modalità per configurare le porte seriali:
+
+   **Modalità Manuale:**
+   - Aprire il file `usb_ports_config.json` presente sul Raspberry Pi
+   - Modificare il file inserendo le porte seriali corrette
+
+   **Modalità con Interfaccia Grafica:**
+   - Avviare `IITdata_acq.py`
+   - Eseguire l'accesso
+   - Dal menu **Impostazioni**, selezionare le porte seriali corrette dall'elenco visualizzato
+   - Salvare la configurazione
+   - Fermare `IITdata_acq.py`
+
+ ![Configurazione porte seriali tramite interfaccia grafica](./impostazioni.png)
+   *Figura 5.1: Interfaccia di configurazione delle porte seriali*
+
+
+3. **Avvio della T-Shirt Smart**
+   - Tenere premuto il pulsante sulla T-Shirt per 3 secondi
+   - Verificare che il LED blu lampeggi, indicando il corretto avvio
+
+<p align="center">
+     <img src="./ready.png" alt="T-Shirt pronta per la connessione" width="600">
+     <br>
+     <em>Figura 1: T-Shirt Smart pronta per la connessione (LED blu lampeggiante)</em>
+   </p>
+
+
+4. **Avvio dei Servizi**
+   
+   Avviare i seguenti componenti **nell'ordine indicato**:
+   
+   - `receiver.py` (sul cloud)
+   - `dashboard_server_cloud.py` (sul cloud)
+   - `IITdata_acq.py` (sul Raspberry Pi)
+
+    **Verifica della Connessione:** Una volta stabilita la connessione, i LED verde e blu sulla T-Shirt saranno entrambi accesi.  
+<p align="center">
+     <img src="./acq.png" alt="T-Shirt in modalità acquisizione" width="600">
+     <br>
+     <em>Figura 2: T-Shirt Smart connessa e in modalità acquisizione (LED blu e verde accesi)</em>
+   </p>
+
+### Riavvio del Sistema
+
+In caso sia necessario riavviare il sistema:
+
+1. Fermare i seguenti servizi:
+   - `receiver.py`
+   - `dashboard_server_cloud.py`
+   - `IITdata_acq.py`
+
+2. Spegnere la T-Shirt Smart:
+   - Tenere premuto il pulsante sulla scheda per 3 secondi
+
+3. Riaccendere la T-Shirt Smart:
+   - Attendere lo spegnimento completo
+   - Riaccendere la scheda
+
+4. Ripetere la procedura dal **punto 3** della sezione "Avvio del Sistema"
+---
+
+## 6. Autori
 
 Progetto sviluppato da:
 
